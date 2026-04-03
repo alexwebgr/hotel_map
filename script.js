@@ -24,7 +24,7 @@ let currentLayer = 'hybrid';
 
 // ── DOM refs (populated in initElements) ──
 let pinTypeSelect, nameInput, coordsDisplay, searchInput,
-    exportBtn, authToggle, showPinsBtn, addPinBtn,
+    exportBtn, importBtn, importInput, authToggle, showPinsBtn, addPinBtn,
     sidebar, sidebarContent, sidebarToggle,
     submitBtn, cancelBtn;
 
@@ -109,6 +109,7 @@ function updateAuthUI() {
   authToggle.textContent = isLoggedIn ? 'Logout' : 'Login';
   showPinsBtn.style.display  = isLoggedIn ? '' : 'none';
   addPinBtn.style.display    = isLoggedIn ? '' : 'none';
+  importBtn.style.display    = isLoggedIn ? '' : 'none';
   exportBtn.style.display    = (isLoggedIn && pins.length > 0) ? '' : 'none';
   if (!isLoggedIn) sidebar.classList.remove('open');
 }
@@ -216,6 +217,36 @@ function updateExportBtn() {
   exportBtn.style.display = (isLoggedIn && pins.length > 0) ? '' : 'none';
 }
 
+// ── Import ──
+function handleImport(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const gj = JSON.parse(e.target.result);
+      const features = (gj.features || []).filter(f =>
+        f.geometry && f.geometry.type === 'Point' && f.geometry.coordinates?.length >= 2
+      );
+      if (!features.length) { toast('No point features found'); return; }
+      features.forEach(f => {
+        const [lng, lat] = f.geometry.coordinates;
+        const name = f.properties?.name || `Pin ${pins.length + 1}`;
+        const typeConfig = getTypeConfig(f.properties?.type);
+        const marker = createMarker(lat, lng, typeConfig, name);
+        pins.push({ name, lat, lng, type: typeConfig.value, marker });
+      });
+      updatePinPills();
+      updateExportBtn();
+      savePins();
+      toast(`${features.length} pin${features.length > 1 ? 's' : ''} imported`);
+    } catch {
+      toast('Invalid GeoJSON file');
+    }
+    importInput.value = '';
+  };
+  reader.readAsText(file);
+}
+
 // ── Export ──
 function doExport() {
   if (!isLoggedIn) { toast('Please log in to export'); return; }
@@ -279,6 +310,8 @@ function initElements() {
   coordsDisplay  = document.getElementById('coords');
   searchInput    = document.getElementById('searchInput');
   exportBtn      = document.getElementById('exportBtn');
+  importBtn      = document.getElementById('importBtn');
+  importInput    = document.getElementById('importInput');
   authToggle     = document.getElementById('auth-toggle');
   showPinsBtn    = document.getElementById('show-pins-btn');
   addPinBtn      = document.getElementById('addPinBtn');
@@ -298,6 +331,8 @@ function initElements() {
   authToggle.addEventListener('click', toggleAuth);
   showPinsBtn.addEventListener('click', toggleSidebar);
   exportBtn.addEventListener('click', doExport);
+  importBtn.addEventListener('click', () => importInput.click());
+  importInput.addEventListener('change', e => handleImport(e.target.files[0]));
   sidebarToggle.addEventListener('click', toggleSidebar);
 
   // Modal

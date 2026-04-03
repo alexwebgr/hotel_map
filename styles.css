@@ -192,15 +192,27 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 
 /* ── Toast ── */
 .toast {
-  position: fixed; top: 1rem; left: 50%;
-  transform: translateX(-50%) translateY(-6px);
+  position: fixed; bottom: 2rem; left: 50%;
+  transform: translateX(-50%) translateY(8px);
   z-index: 3000; background: var(--text); color: #fff;
-  padding: 0.45rem 1rem; border-radius: 9999px;
-  font-size: 0.8rem; font-weight: 500;
+  padding: 0.75rem 1.5rem; border-radius: 9999px;
+  font-size: 0.9rem; font-weight: 500;
   opacity: 0; pointer-events: none;
   transition: opacity 0.2s, transform 0.2s;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .ctrl-btn { padding: 0.4rem 0.6rem; font-size: 0.72rem; }
+  .search-container {
+    top: 3.25rem; left: 0; right: 0;
+    transform: none; padding: 0 0.75rem;
+  }
+  .search-input { width: 100%; }
+  .modal-row { flex-wrap: wrap; }
+  .modal-name { width: 100%; flex-basis: 100%; }
+}
 
 /* ── Leaflet customization ── */
 .leaflet-popup-content-wrapper {

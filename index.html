@@ -27,9 +27,11 @@
   <input type="text" class="search-input" id="searchInput" placeholder="Search pins…">
 </div>
 
-<!-- Top right: show pins, export, login -->
+<!-- Top right: show pins, import, export, login -->
 <div class="top-right">
   <button class="ctrl-btn" id="show-pins-btn" style="display:none">Show Pins</button>
+  <button class="ctrl-btn" id="importBtn" style="display:none">Import GeoJSON</button>
+  <input type="file" id="importInput" accept=".geojson,.json" style="display:none">
   <button class="ctrl-btn" id="exportBtn" style="display:none">Export GeoJSON</button>
   <button class="ctrl-btn" id="auth-toggle">Login</button>
 </div>

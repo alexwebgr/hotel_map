@@ -106,11 +106,9 @@ function toggleAuth() {
 }
 
 function updateAuthUI() {
-  authToggle.textContent = isLoggedIn ? 'Logout' : 'Login';
-  showPinsBtn.style.display  = isLoggedIn ? '' : 'none';
-  addPinBtn.style.display    = isLoggedIn ? '' : 'none';
-  importBtn.style.display    = isLoggedIn ? '' : 'none';
-  exportBtn.style.display    = (isLoggedIn && pins.length > 0) ? '' : 'none';
+  authToggle.textContent    = isLoggedIn ? 'Logout' : 'Login';
+  showPinsBtn.style.display = isLoggedIn ? '' : 'none';
+  addPinBtn.style.display   = isLoggedIn ? '' : 'none';
   if (!isLoggedIn) sidebar.classList.remove('open');
 }
 
@@ -214,7 +212,7 @@ function del(i) {
 }
 
 function updateExportBtn() {
-  exportBtn.style.display = (isLoggedIn && pins.length > 0) ? '' : 'none';
+  exportBtn.disabled = pins.length === 0;
 }
 
 // ── Import ──

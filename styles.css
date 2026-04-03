@@ -114,6 +114,21 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
   flex: 1; overflow-y: auto; padding: 0.75rem;
   display: flex; flex-direction: column; gap: 0.4rem;
 }
+.sidebar-footer {
+  padding: 0.75rem; border-top: 1px solid var(--border);
+  display: flex; gap: 0.5rem; flex-shrink: 0;
+}
+.sidebar-btn {
+  flex: 1; padding: 0.6rem 0.5rem;
+  background: transparent; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-family: var(--font);
+  font-size: 0.8rem; font-weight: 600; color: var(--muted);
+  cursor: pointer; transition: all var(--t); white-space: nowrap;
+}
+.sidebar-btn:hover:not(:disabled) { border-color: var(--text); color: var(--text); }
+.sidebar-btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.sidebar-btn-primary:hover:not(:disabled) { background: var(--primary-h); border-color: var(--primary-h); color: #fff; }
+.sidebar-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── Pin chip/pill ── */
 .chip {

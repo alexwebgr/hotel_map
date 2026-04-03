@@ -48,7 +48,7 @@ function makeMarkerIcon(color, name) {
     className: '',
     html: `<div style="display:flex;align-items:center;gap:4px">
       <div style="width:24px;height:24px;flex-shrink:0;background:${color};border:2.5px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>
-      <span style="background:rgba(255,255,255,0.93);border-radius:3px;padding:2px 6px;font-size:10px;font-weight:700;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;white-space:nowrap;color:#28251d;box-shadow:0 1px 4px rgba(0,0,0,0.15);max-width:130px;overflow:hidden;text-overflow:ellipsis;display:block">${name}</span>
+      <span style="background:rgba(255,255,255,0.93);border-radius:3px;padding:2px 6px;font-size:10px;font-weight:700;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;white-space:nowrap;color:#28251d;box-shadow:0 1px 4px rgba(0,0,0,0.15)">${name}</span>
     </div>`,
     iconSize: [0, 0], iconAnchor: [12, 24], popupAnchor: [0, -28]
   });

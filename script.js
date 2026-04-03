@@ -10,10 +10,10 @@ const tileLayers = {
     })
 };
 
-const map = L.map('map', { zoomControl: true, layers: [tileLayers.satellite] })
+const map = L.map('map', { zoomControl: true, layers: [tileLayers.hybrid] }) // Hybrid as default
         .setView([35.5138, 24.0180], 18);
 
-let currentLayer = 'satellite';
+let currentLayer = 'hybrid'; // Start with hybrid
 function setLayer(name) {
     map.removeLayer(tileLayers[currentLayer]);
     map.addLayer(tileLayers[name]);
@@ -32,7 +32,18 @@ let pins = []; // Changed from 'rooms' to 'pins' for generality
 let pending = null;
 let ghostMarker = null;
 let isLoggedIn = false; // Auth state
-let pinTypeSelect = null; // Will be initialized in DOMContentLoaded
+let pinTypeSelect = null;
+let nameInput = null;
+let coordsDisplay = null;
+let searchInput = null;
+let searchBtn = null;
+let exportBtn = null;
+let authToggle = null;
+let showPinsBtn = null;
+let sidebar = null;
+let sidebarContent = null;
+let sidebarToggle = null;
+let addPinEnabled = false; // Start in view mode (not adding pins)
 
 // Pin type configuration
 const pinTypes = [
@@ -44,59 +55,74 @@ const pinTypes = [
     { value: 'gym', label: 'Gym', color: '#8b5cf6' }
 ];
 
-let addPinEnabled = false; // Toggle state for pin adding
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize pin type dropdown
-    pinTypeSelect = document.createElement('select');
-    pinTypeSelect.className = 'modal-input';
-    pinTypeSelect.innerHTML = pinTypes.map(type => 
-        `<option value="${type.value}">${type.label}</option>`
-    ).join('');
-    
-    // Insert the dropdown after the name input
-    const nameInput = document.getElementById('nameInput');
-    nameInput.parentNode.insertBefore(pinTypeSelect, nameInput.nextSibling);
-    
-    // Load pins from localStorage
-    loadPins();
-    
-    // Update UI based on loaded pins
-    renderChips();
-    if (pins.length > 0) {
-        document.getElementById('exportBtn').disabled = false;
+// Function definitions FIRST
+function updateAuthUI() {
+    // Update auth button text
+    if (authToggle) {
+        authToggle.textContent = isLoggedIn ? 'Logout' : 'Login';
     }
-});
-
-map.on('click', e => {
-    if (addPinEnabled) {
-        openModal(e.latlng.lat, e.latlng.lng);
+    
+    // Show/hide controls based on login state
+    if (exportBtn) {
+        exportBtn.style.display = isLoggedIn ? 'inline-block' : 'none';
     }
-    // If addPinEnabled is false, clicks are ignored (view-only mode)
-});
+    if (showPinsBtn) {
+        showPinsBtn.style.display = isLoggedIn ? 'inline-block' : 'none';
+    }
+    if (sidebar) {
+        sidebar.style.display = isLoggedIn ? 'block' : 'none';
+    }
+    
+    // Save login state to localStorage
+    localStorage.setItem('hotelMapIsLoggedIn', isLoggedIn);
+}
+
+function updateExportButtonState() {
+    if (exportBtn) {
+        // Only show export button if logged in AND there are pins
+        if (isLoggedIn && pins.length > 0) {
+            exportBtn.style.display = 'inline-block';
+            exportBtn.disabled = false;
+        } else {
+            exportBtn.style.display = 'none';
+        }
+    }
+}
+
+function updateShowPinsButtonState() {
+    if (showPinsBtn) {
+        showPinsBtn.style.display = isLoggedIn ? 'inline-block' : 'none';
+    }
+}
 
 function openModal(lat, lng) {
+    // Double-check login state (should already be handled by click listener)
+    if (!isLoggedIn) {
+        toast('Please log in to add pins');
+        return;
+    }
+    
     pending = { lat, lng };
-    document.getElementById('coords').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    document.getElementById('nameInput').value = '';
+    coordsDisplay.textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+    nameInput.value = '';
     pinTypeSelect.value = 'rooms'; // Reset to default
     document.getElementById('backdrop').classList.add('open');
     if (ghostMarker) map.removeLayer(ghostMarker);
     ghostMarker = L.circleMarker([lat, lng], {
         radius: 6, 
-        color: pinTypes.find(t => t.value === 'rooms').color, 
-        fillColor: pinTypes.find(t => t.value === 'rooms').color, 
+        color: pinTypes.find(function(t) { return t.value === 'rooms'; }).color, 
+        fillColor: pinTypes.find(function(t) { return t.value === 'rooms'; }).color, 
         fillOpacity: 0.45, 
         weight: 2
     }).addTo(map);
     // Update ghost marker color when type changes
     pinTypeSelect.addEventListener('change', updateGhostMarkerColor);
-    setTimeout(() => document.getElementById('nameInput').focus(), 260);
+    setTimeout(function() { nameInput.focus(); }, 260);
 }
 
 function updateGhostMarkerColor() {
     if (!pending) return;
-    const selectedType = pinTypes.find(t => t.value === pinTypeSelect.value);
+    const selectedType = pinTypes.find(function(t) { return t.value === pinTypeSelect.value; });
     if (ghostMarker) {
         map.removeLayer(ghostMarker);
     }
@@ -127,27 +153,27 @@ function confirm() {
         return;
     }
     
-    const raw = document.getElementById('nameInput').value.trim();
-    const name = raw || `Room ${pins.length + 1}`;
+    const raw = nameInput.value.trim();
+    const name = raw || 'Pin ' + (pins.length + 1);
     const { lat, lng } = pending;
-    const selectedType = pinTypes.find(t => t.value === pinTypeSelect.value);
+    const selectedType = pinTypes.find(function(t) { return t.value === pinTypeSelect.value; });
     
     const marker = L.marker([lat, lng], {
         icon: L.divIcon({
             className: '',
-            html: `<div style="width:28px;height:28px;background:${selectedType.color};border:2.5px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="transform:rotate(45deg);color:#fff;font-size:10px;font-weight:700;font-family:Satoshi,sans-serif">${pins.length + 1}</span></div>`,
+            html: '<div style="width:28px;height:28px;background:' + selectedType.color + ';border:2.5px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="transform:rotate(45deg);color:#fff;font-size:10px;font-weight:700;font-family:Satoshi,sans-serif">' + (pins.length + 1) + '</span></div>',
             iconSize:[28,28], iconAnchor:[14,28], popupAnchor:[0,-32]
         })
     }).addTo(map);
     
-    marker.bindPopup(`<div class="pi"><div class="pi-name">${name}</div><div class="pi-coords">${lat.toFixed(6)}, ${lng.toFixed(6)}</div></div>`);
+    marker.bindPopup('<div class="pi"><div class="pi-name">' + name + '</div><div class="pi-coords">' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</div></div>');
     
     const pin = { 
-        name, 
-        lat, 
-        lng, 
+        name: name, 
+        lat: lat, 
+        lng: lng, 
         type: selectedType.value,
-        marker 
+        marker: marker 
     };
     
     pins.push(pin);
@@ -157,37 +183,33 @@ function confirm() {
     }
     document.getElementById('backdrop').classList.remove('open');
     pending = null;
-    renderChips();
-    document.getElementById('exportBtn').disabled = false;
+    updatePinPills();
+    updateExportButtonState();
     savePins(); // Persist to localStorage
-    toast(`${name} pinned`);
+    toast(name + ' added');
     
     // Remove event listener
     pinTypeSelect.removeEventListener('change', updateGhostMarkerColor);
 }
 
-document.getElementById('nameInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') confirm();
-    if (e.key === 'Escape') cancel();
-});
-document.getElementById('backdrop').addEventListener('click', e => {
-    if (e.target === document.getElementById('backdrop')) cancel();
-});
-
-function renderChips() {
-    const el = document.getElementById('chips');
+function updatePinPills() {
+    const chipsContainer = document.getElementById('chips');
     if (!pins.length) { 
-        el.innerHTML = '<span class="empty">Click the map to place a room pin</span>'; 
+        chipsContainer.innerHTML = '<span class="empty">Click the map to place a pin</span>'; 
         return; 
     }
-    el.innerHTML = pins.map((p,i) => {
-        const typeConfig = pinTypes.find(t => t.value === p.type);
-        return `
-        <div class="chip" onclick="flyTo(${i})" style="border-color: ${typeConfig.color}; color: ${typeConfig.color};">
-          ${p.name}
-          <span class="chip-x" onclick="event.stopPropagation();del(${i})">✕</span>
-        </div>`;
+    chipsContainer.innerHTML = pins.map(function(p,i) {
+        const typeConfig = pinTypes.find(function(t) { return t.value === p.type; });
+        return '<div class="chip" onclick="flyTo(' + i + ')" style="border-color: ' + typeConfig.color + '; color: ' + typeConfig.color + ';">' +
+               p.name +
+               '<span class="chip-x" onclick="event.stopPropagation();del(' + i + ')">✕</span>' +
+               '</div>';
     }).join('');
+    
+    // Also update sidebar content if it exists
+    if (sidebarContent) {
+        sidebarContent.innerHTML = chipsContainer.innerHTML;
+    }
 }
 
 function flyTo(i) {
@@ -204,8 +226,8 @@ function del(i) {
     
     map.removeLayer(pins[i].marker);
     pins.splice(i, 1);
-    renderChips();
-    if (!pins.length) document.getElementById('exportBtn').disabled = true;
+    updatePinPills();
+    updateExportButtonState();
     savePins(); // Persist to localStorage
     toast('Pin removed');
 }
@@ -219,14 +241,16 @@ function doExport() {
     
     const gj = {
         type: 'FeatureCollection',
-        features: pins.map(p => ({
-            type: 'Feature',
-            properties: { 
-                name: p.name,
-                type: p.type
-            },
-            geometry: { type: 'Point', coordinates: [p.lng, p.lat] }
-        }))
+        features: pins.map(function(p) {
+            return {
+                type: 'Feature',
+                properties: { 
+                    name: p.name,
+                    type: p.type
+                },
+                geometry: { type: 'Point', coordinates: [p.lng, p.lat] }
+            };
+        })
     };
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(gj, null, 2)], { type: 'application/json' }));
@@ -236,128 +260,37 @@ function doExport() {
 }
 
 // Search bar implementation
-let searchInput = null;
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Create search input
-    searchInput = document.createElement('input');
-    searchInput.type = 'text';
-    searchInput.placeholder = 'Search pins...';
-    searchInput.className = 'modal-input';
-    searchInput.style.margin = '0.5rem 1rem';
-    searchInput.style.width = 'calc(100% - 2rem)';
-    
-    // Insert search input after the handle in the panel
-    const panel = document.querySelector('.panel');
-    const handle = panel.querySelector('.handle');
-    panel.insertBefore(searchInput, handle.nextSibling);
-    
-    // Add event listener for search
-    searchInput.addEventListener('input', handleSearch);
-});
-
-function handleSearch() {
+function handleSearchClick() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     
-    // Update chip display to highlight matching pins
-    const chipsContainer = document.getElementById('chips');
-    if (!pins.length) {
-        chipsContainer.innerHTML = '<span class="empty">Click the map to place a room pin</span>';
-        return;
-    }
-    
     if (searchTerm === '') {
-        // Show all chips if search is empty
-        renderChips();
+        toast('Please enter a search term');
         return;
     }
     
-    // Filter pins and create chips
-    const filteredPins = pins.filter(p => 
-        p.name.toLowerCase().includes(searchTerm) || 
-        p.type.toLowerCase().includes(searchTerm)
-    );
+    // Find matching pin
+    const matchedPinIndex = pins.findIndex(function(p) { 
+        return p.name.toLowerCase().includes(searchTerm) || 
+               p.type.toLowerCase().includes(searchTerm);
+    });
     
-    if (filteredPins.length === 0) {
-        chipsContainer.innerHTML = '<span class="empty">No pins match your search</span>';
+    if (matchedPinIndex === -1) {
+        toast('No pins match your search');
         return;
     }
     
-    chipsContainer.innerHTML = filteredPins.map((p, originalIndex) => {
-        const typeConfig = pinTypes.find(t => t.value === p.type);
-        return `
-        <div class="chip" onclick="flyTo(${originalIndex})" style="border-color: ${typeConfig.color}; color: ${typeConfig.color};">
-          ${p.name}
-          <span class="chip-x" onclick="event.stopPropagation();del(${originalIndex})">✕</span>
-        </div>`;
-    }).join('');
+    // Fly to the pin and open popup
+    map.flyTo([pins[matchedPinIndex].lat, pins[matchedPinIndex].lng], 20, { duration: 0.7 });
+    pins[matchedPinIndex].marker.openPopup();
+    
+    // Clear search input
+    searchInput.value = '';
 }
 
-// Pin addition toggle
-let toggleButton = null;
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Create toggle button
-    toggleButton = document.createElement('button');
-    toggleButton.className = 'layer-btn';
-    toggleButton.id = 'toggle-add-pins';
-    toggleButton.textContent = 'Add Pins';
-    toggleButton.style.marginLeft = '0.5rem';
-    
-    // Insert toggle button after the layer buttons
-    const layersContainer = document.querySelector('.layers');
-    layersContainer.appendChild(toggleButton);
-    
-    // Add event listener
-    toggleButton.addEventListener('click', toggleAddPinMode);
-});
-
-function toggleAddPinMode() {
-    addPinEnabled = !addPinEnabled;
-    if (addPinEnabled) {
-        toggleButton.textContent = 'View Only';
-        toggleButton.classList.add('active');
-        toast('Pin adding enabled - click on map to add pins');
-    } else {
-        toggleButton.textContent = 'Add Pins';
-        toggleButton.classList.remove('active');
-        toast('Pin adding disabled - view only mode');
-    }
-}
-
-// Login/logout button
-let authButton = null;
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Create auth button
-    authButton = document.createElement('button');
-    authButton.className = 'layer-btn';
-    authButton.id = 'auth-toggle';
-    authButton.textContent = 'Login';
-    authButton.style.marginLeft = '0.5rem';
-    
-    // Insert auth button after the toggle button
-    const layersContainer = document.querySelector('.layers');
-    layersContainer.appendChild(authButton);
-    
-    // Add event listener
-    authButton.addEventListener('click', toggleAuth);
-});
-
-function toggleAuth() {
-    isLoggedIn = !isLoggedIn;
-    if (isLoggedIn) {
-        authButton.textContent = 'Logout';
-        toast('Logged in successfully');
-        // Enable export button if there are pins
-        if (pins.length > 0) {
-            document.getElementById('exportBtn').disabled = false;
-        }
-    } else {
-        authButton.textContent = 'Login';
-        toast('Logged out');
-        // Disable export button when logged out
-        document.getElementById('exportBtn').disabled = true;
+// Sidebar toggle
+function toggleSidebar() {
+    if (sidebar) {
+        sidebar.classList.toggle('open');
     }
 }
 
@@ -368,18 +301,18 @@ function loadPins() {
         try {
             const parsed = JSON.parse(savedPins);
             // Reconstruct pins with markers
-            pins = parsed.map(savedPin => {
+            pins = parsed.map(function(savedPin) {
                 // Create marker for each pin
-                const typeConfig = pinTypes.find(t => t.value === savedPin.type) || pinTypes[0]; // Default to rooms
+                const typeConfig = pinTypes.find(function(t) { return t.value === savedPin.type; }) || pinTypes[0]; // Default to rooms
                 const marker = L.marker([savedPin.lat, savedPin.lng], {
                     icon: L.divIcon({
                         className: '',
-                        html: `<div style="width:28px;height:28px;background:${typeConfig.color};border:2.5px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="transform:rotate(45deg);color:#fff;font-size:10px;font-weight:700;font-family:Satoshi,sans-serif">${pins.indexOf(savedPin) + 1}</span></div>`,
+                        html: '<div style="width:28px;height:28px;background:' + typeConfig.color + ';border:2.5px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="transform:rotate(45deg);color:#fff;font-size:10px;font-weight:700;font-family:Satoshi,sans-serif">' + (pins.indexOf(savedPin) + 1) + '</span></div>',
                         iconSize:[28,28], iconAnchor:[14,28], popupAnchor:[0,-32]
                     })
                 }).addTo(map);
                 
-                marker.bindPopup(`<div class="pi"><div class="pi-name">${savedPin.name}</div><div class="pi-coords">${savedPin.lat.toFixed(6)}, ${savedPin.lng.toFixed(6)}</div></div>`);
+                marker.bindPopup('<div class="pi"><div class="pi-name">' + savedPin.name + '</div><div class="pi-coords">' + savedPin.lat.toFixed(6) + ', ' + savedPin.lng.toFixed(6) + '</div></div>');
                 
                 return {
                     name: savedPin.name,
@@ -400,18 +333,98 @@ function loadPins() {
 
 function savePins() {
     // Save only the data, not the marker objects (which aren't serializable)
-    const pinsData = pins.map(p => ({
-        name: p.name,
-        lat: p.lat,
-        lng: p.lng,
-        type: p.type
-    }));
+    const pinsData = pins.map(function(p) {
+        return {
+            name: p.name,
+            lat: p.lat,
+            lng: p.lng,
+            type: p.type
+        };
+    });
     localStorage.setItem('hotelMapPins', JSON.stringify(pinsData));
 }
 
 let tt;
 function toast(msg) {
     const el = document.getElementById('toast');
-    el.textContent = msg; el.classList.add('show');
-    clearTimeout(tt); tt = setTimeout(() => el.classList.remove('show'), 2000);
+    el.textContent = msg; 
+    el.classList.add('show');
+    clearTimeout(tt); 
+    tt = setTimeout(function() { el.classList.remove('show'); }, 2000);
 }
+
+// DOMContentLoaded listener - now functions are defined
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize elements
+    initElements();
+    
+    // Load login state from localStorage
+    const savedLoginState = localStorage.getItem('hotelMapIsLoggedIn');
+    isLoggedIn = savedLoginState === 'true';
+    updateAuthUI();
+    
+    // Load pins from localStorage
+    loadPins();
+    
+    // Update UI based on loaded pins
+    updatePinPills();
+    updateExportButtonState();
+    updateShowPinsButtonState();
+});
+
+function initElements() {
+    // Get references to elements
+    pinTypeSelect = document.getElementById('pinTypeSelect');
+    nameInput = document.getElementById('nameInput');
+    coordsDisplay = document.getElementById('coords');
+    searchInput = document.getElementById('searchInput');
+    searchBtn = document.getElementById('searchBtn');
+    exportBtn = document.getElementById('exportBtn');
+    authToggle = document.getElementById('auth-toggle');
+    showPinsBtn = document.getElementById('show-pins-btn');
+    sidebar = document.getElementById('sidebar');
+    sidebarContent = document.getElementById('sidebarContent');
+    sidebarToggle = document.getElementById('sidebarToggle');
+    
+    // Add event listeners - ONLY after we have the element references
+    if (searchBtn) {
+        searchBtn.addEventListener('click', handleSearchClick);
+    }
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSearchClick();
+            }
+        });
+    }
+    if (authToggle) {
+        authToggle.addEventListener('click', toggleAuth);
+    }
+    if (showPinsBtn) {
+        showPinsBtn.addEventListener('click', toggleSidebar);
+    }
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+    if (nameInput) {
+        nameInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') confirm();
+            if (e.key === 'Escape') cancel();
+        });
+    }
+    if (document.getElementById('backdrop')) {
+        document.getElementById('backdrop').addEventListener('click', function(e) {
+            if (e.target === document.getElementById('backdrop')) cancel();
+        });
+    }
+    
+    // Initial UI updates based on login state
+    updateAuthUI();
+}
+
+map.on('click', e => {
+    if (addPinEnabled && isLoggedIn) {
+        openModal(e.latlng.lat, e.latlng.lng);
+    }
+    // If addPinEnabled is false or not logged in, clicks are ignored (view-only mode)
+});

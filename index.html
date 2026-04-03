@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Room Survey</title>
+  <title>Hotel Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link rel="stylesheet" href="styles.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -12,31 +12,62 @@
 
 <div id="map"></div>
 
-<div class="layers">
+<!-- Top controls -->
+<div class="top-controls">
   <button class="layer-btn active" id="btn-satellite" onclick="setLayer('satellite')">Satellite</button>
   <button class="layer-btn" id="btn-hybrid" onclick="setLayer('hybrid')">Hybrid</button>
   <button class="layer-btn" id="btn-street" onclick="setLayer('street')">Street</button>
+  <button class="layer-btn" id="show-pins-btn">Show Pins</button>
+  <button class="export-btn" id="exportBtn">Export GeoJSON</button>
+  <button class="layer-btn" id="auth-toggle">Login</button>
 </div>
 
+<!-- Search container -->
+<div class="search-container">
+  <input type="text" class="search-input" id="searchInput" placeholder="Search pins...">
+  <button class="search-btn" id="searchBtn">Search</button>
+</div>
+
+<!-- Panel at bottom (kept for handle) -->
 <div class="panel">
   <div class="handle"></div>
-  <div class="chips" id="chips"><span class="empty">Click the map to place a room pin</span></div>
-  <button class="export-btn" id="exportBtn" disabled onclick="doExport()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Export GeoJSON
-  </button>
 </div>
 
+<!-- Sidebar for pin pills -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">Pins</div>
+    <button class="sidebar-toggle" id="sidebarToggle">&times;</button>
+  </div>
+  <div class="sidebar-content" id="sidebarContent">
+    <div class="chips" id="chips"><span class="empty">Click the map to place a pin</span></div>
+  </div>
+</div>
+
+<!-- Backdrop and modal -->
 <div class="backdrop" id="backdrop">
   <div class="modal">
     <div>
-      <div class="modal-title">Name this room</div>
+      <div class="modal-title">Add Pin</div>
+      <div>
+        <span>Type:</span>
+        <select class="modal-input" id="pinTypeSelect">
+          <option value="rooms">Rooms</option>
+          <option value="pool">Pool</option>
+          <option value="bar">Bar</option>
+          <option value="reception">Reception</option>
+          <option value="restaurant">Restaurant</option>
+          <option value="gym">Gym</option>
+        </select>
+      </div>
+      <div>
+        <input class="modal-input" id="nameInput" type="text" placeholder="Enter pin name" autocomplete="off" spellcheck="false"/>
+      </div>
       <div class="modal-coords" id="coords"></div>
     </div>
-    <input class="modal-input" id="nameInput" type="text" placeholder="e.g. 101, Reception, Pool Bar…" autocomplete="off" spellcheck="false"/>
     <div class="modal-btns">
       <button class="btn-no" onclick="cancel()">Cancel</button>
-      <button class="btn-ok" onclick="confirm()">Place Pin</button>
+      <button class="btn-ok" onclick="confirm()">Submit</button>
     </div>
   </div>
 </div>

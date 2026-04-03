@@ -27,3 +27,15 @@ schema
 
 initially i need to validate the idea then we can make it production ready it should definitely work smootly on a mobile devices so lets make the ui responsive 
 come up with a plan on how to implement this 
+
+* export geojson make it a button at the top right along with login/logout and a button to show the pin pills which is only visible to logged in users
+* make hybrid default map mode
+* the label of the pin should be the name attribute
+* Add pins buttons is not selected by default when clicked the label remains the same, so basically when we visit the app we are in view mode and only when clicking on add pins we add pins
+* the add pin form title is Add pin, below is the pin type next to it the field to enter the name next to it the submit button followed by cancel 
+* the search pin is a small field at the top center of the screen, does nothing as the user types and enter is hit it centers the map around that pin and highlights it 
+* the pin pills appear in a collapsible sidebar at the right of the screen
+
+* replace the onclick html attributes with js event handlers
+* download and use the leaflet js files 
+* use a local font like helvetica

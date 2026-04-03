@@ -12,10 +12,10 @@
 html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 #map { position: fixed; inset: 0; cursor: crosshair; }
 
-.layers {
-  position: fixed; top: 1rem; left: 1rem; z-index: 1000;
-  background: var(--surface); border-radius: 0.625rem;
-  box-shadow: var(--shadow); display: flex; overflow: hidden;
+/* Top controls container */
+.top-controls {
+  position: fixed; top: 1rem; right: 1rem; z-index: 1000;
+  display: flex; gap: 0.5rem;
 }
 .layer-btn {
   padding: 0.5rem 0.875rem; border: none; background: transparent;
@@ -25,6 +25,30 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 .layer-btn + .layer-btn { border-left: 1px solid var(--border); }
 .layer-btn.active { background: var(--primary); color: #fff; }
 
+/* Search container at top center */
+.search-container {
+  position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+  z-index: 1000; display: flex; gap: 0.5rem; align-items: center;
+}
+.search-input {
+  padding: 0.875rem 1rem; border: 1.5px solid var(--border);
+  border-radius: 0.5rem; font-family: var(--font);
+  font-size: 1rem; font-weight: 500; color: var(--text);
+  background: var(--bg); outline: none;
+  width: 200px;
+  transition: border-color var(--t), box-shadow var(--t);
+}
+.search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(1,105,111,0.15); }
+.search-input::placeholder { color: var(--faint); font-weight: 400; }
+.search-btn {
+  padding: 0.875rem 1rem; background: var(--primary); color: #fff;
+  border: none; border-radius: 0.5rem; font-family: var(--font);
+  font-size: 0.875rem; font-weight: 500; cursor: pointer;
+  transition: background var(--t);
+}
+.search-btn:hover { background: var(--primary-h); }
+
+/* Panel at bottom */
 .panel {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
   background: var(--surface); border-radius: 1.25rem 1.25rem 0 0;
@@ -60,6 +84,7 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 .export-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
 .export-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
+/* Backdrop and modal */
 .backdrop {
   position: fixed; inset: 0; z-index: 2000;
   background: rgba(40,37,29,0.45); backdrop-filter: blur(2px);
@@ -118,3 +143,24 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 .pi { padding: 0.65rem 0.9rem; }
 .pi-name { font-weight: 700; font-size: 0.9rem; }
 .pi-coords { color: var(--muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+
+/* Sidebar for pin pills */
+.sidebar {
+  position: fixed; top: 0; right: -300px; width: 300px; height: 100%;
+  background: var(--surface); box-shadow: var(--shadow);
+  z-index: 1000; transition: right 0.3s ease;
+  display: flex; flex-direction: column;
+}
+.sidebar.open { right: 0; }
+.sidebar-header {
+  padding: 1rem; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sidebar-title { font-weight: 600; font-size: 1.1rem; }
+.sidebar-toggle {
+  background: none; border: none; font-size: 1.2rem;
+  cursor: pointer; color: var(--muted);
+  padding: 0.25rem; border-radius: 50%;
+}
+.sidebar-toggle:hover { background: var(--bg); color: var(--text); }
+.sidebar-content { flex: 1; overflow-y: auto; padding: 1rem; }

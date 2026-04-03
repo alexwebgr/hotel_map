@@ -40,7 +40,7 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 /* ── Top left: layer group + add pins ── */
 .top-left {
   position: fixed; top: 1rem; left: 1rem; z-index: 1000;
-  display: flex; gap: 0.5rem; align-items: center;
+  display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start;
 }
 .layer-group {
   display: flex;

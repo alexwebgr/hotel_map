@@ -37,27 +37,12 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 .ctrl-btn.active { background: var(--primary); color: #fff; }
 .ctrl-btn.active:hover { background: var(--primary-h); }
 
-/* ── Top left: layer group + add pins ── */
+/* ── Top left: layer cycle + add pins ── */
 .top-left {
   position: fixed; top: 1rem; left: 1rem; z-index: 1000;
-  display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start;
+  display: flex; flex-direction: row; gap: 0.4rem; align-items: center;
 }
-.layer-group {
-  display: flex;
-  background: rgba(255,255,255,0.92);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-.layer-group .ctrl-btn {
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-}
-.layer-group .ctrl-btn + .ctrl-btn { border-left: 1px solid var(--border); }
-.layer-group .ctrl-btn.active { background: var(--primary); color: #fff; }
-/* standalone ctrl-btn (e.g. Add Pins) outside a group */
-.top-left > .ctrl-btn { box-shadow: var(--shadow); }
+.top-left .ctrl-btn { box-shadow: var(--shadow); }
 
 /* ── Top right ── */
 .top-right {
@@ -219,9 +204,9 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 
 /* ── Mobile ── */
 @media (max-width: 600px) {
-  .ctrl-btn { padding: 0.4rem 0.6rem; font-size: 0.72rem; }
+  .ctrl-btn { padding: 0.35rem 0.55rem; font-size: 0.72rem; }
   .search-container {
-    top: 3.25rem; left: 0; right: 0;
+    top: 3rem; left: 0; right: 0;
     transform: none; padding: 0 0.75rem;
   }
   .search-input { width: 100%; }

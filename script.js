@@ -24,7 +24,7 @@ let currentLayer = 'hybrid';
 
 // ── DOM refs (populated in initElements) ──
 let pinTypeSelect, nameInput, coordsDisplay, searchInput,
-    exportBtn, importBtn, importInput, authToggle, showPinsBtn, addPinBtn,
+    exportBtn, importBtn, importInput, authToggle, showPinsBtn, addPinBtn, layerBtn,
     sidebar, sidebarContent, sidebarToggle,
     submitBtn, cancelBtn;
 
@@ -44,11 +44,13 @@ function getTypeConfig(value) {
 }
 
 function makeMarkerIcon(color, name) {
-  const abbr = name.substring(0, 3);
   return L.divIcon({
     className: '',
-    html: `<div style="width:28px;height:28px;background:${color};border:2.5px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="transform:rotate(45deg);color:#fff;font-size:9px;font-weight:700;font-family:Helvetica Neue,Helvetica,Arial,sans-serif">${abbr}</span></div>`,
-    iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -32]
+    html: `<div style="display:flex;align-items:center;gap:4px">
+      <div style="width:24px;height:24px;flex-shrink:0;background:${color};border:2.5px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>
+      <span style="background:rgba(255,255,255,0.93);border-radius:3px;padding:2px 6px;font-size:10px;font-weight:700;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;white-space:nowrap;color:#28251d;box-shadow:0 1px 4px rgba(0,0,0,0.15);max-width:130px;overflow:hidden;text-overflow:ellipsis;display:block">${name}</span>
+    </div>`,
+    iconSize: [0, 0], iconAnchor: [12, 24], popupAnchor: [0, -28]
   });
 }
 
@@ -86,12 +88,17 @@ navigator.geolocation && navigator.geolocation.getCurrentPosition(
 );
 
 // ── Layer control ──
+const LAYER_ORDER = ['hybrid', 'satellite', 'street'];
+
 function setLayer(name) {
   map.removeLayer(tileLayers[currentLayer]);
   map.addLayer(tileLayers[name]);
   currentLayer = name;
-  document.querySelectorAll('.layer-group .ctrl-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('btn-' + name).classList.add('active');
+  if (layerBtn) layerBtn.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function cycleLayer() {
+  setLayer(LAYER_ORDER[(LAYER_ORDER.indexOf(currentLayer) + 1) % LAYER_ORDER.length]);
 }
 
 // ── Auth ──
@@ -211,9 +218,7 @@ function del(i) {
   toast('Pin removed');
 }
 
-function updateExportBtn() {
-  exportBtn.disabled = pins.length === 0;
-}
+function updateExportBtn() {}
 
 // ── Import ──
 function handleImport(file) {
@@ -313,18 +318,15 @@ function initElements() {
   authToggle     = document.getElementById('auth-toggle');
   showPinsBtn    = document.getElementById('show-pins-btn');
   addPinBtn      = document.getElementById('addPinBtn');
+  layerBtn       = document.getElementById('layerBtn');
   sidebar        = document.getElementById('sidebar');
   sidebarContent = document.getElementById('sidebarContent');
   sidebarToggle  = document.getElementById('sidebarToggle');
   submitBtn      = document.getElementById('submitBtn');
   cancelBtn      = document.getElementById('cancelBtn');
 
-  // Layer buttons
-  ['satellite', 'hybrid', 'street'].forEach(name =>
-    document.getElementById('btn-' + name).addEventListener('click', () => setLayer(name))
-  );
-
   // Top controls
+  layerBtn.addEventListener('click', cycleLayer);
   addPinBtn.addEventListener('click', toggleAddPin);
   authToggle.addEventListener('click', toggleAuth);
   showPinsBtn.addEventListener('click', toggleSidebar);

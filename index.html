@@ -12,13 +12,9 @@
 
 <div id="map"></div>
 
-<!-- Top left: layer modes + add pins -->
+<!-- Top left: layer cycle + add pins -->
 <div class="top-left">
-  <div class="layer-group">
-    <button class="ctrl-btn" id="btn-satellite">Satellite</button>
-    <button class="ctrl-btn active" id="btn-hybrid">Hybrid</button>
-    <button class="ctrl-btn" id="btn-street">Street</button>
-  </div>
+  <button class="ctrl-btn" id="layerBtn">Hybrid</button>
   <button class="ctrl-btn" id="addPinBtn" style="display:none">Add Pins</button>
 </div>
 
@@ -45,7 +41,7 @@
   <div class="sidebar-footer">
     <input type="file" id="importInput" accept=".geojson,.json" style="display:none">
     <button class="sidebar-btn" id="importBtn">Import GeoJSON</button>
-    <button class="sidebar-btn sidebar-btn-primary" id="exportBtn" disabled>Export GeoJSON</button>
+    <button class="sidebar-btn sidebar-btn-primary" id="exportBtn">Export GeoJSON</button>
   </div>
 </div>
 

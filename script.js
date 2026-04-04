@@ -23,7 +23,7 @@ let addPinEnabled = false;
 let currentLayer = 'hybrid';
 
 // ── DOM refs (populated in initElements) ──
-let pinTypeSelect, nameInput, coordsDisplay, searchInput,
+let pinTypeSelect, nameInput, directionsInput, coordsDisplay, searchInput,
     exportBtn, importBtn, importInput, authToggle, showPinsBtn, addPinBtn, layerBtn,
     locateBtn, sidebar, sidebarContent, sidebarToggle,
     submitBtn, cancelBtn;
@@ -57,12 +57,13 @@ function makeMarkerIcon(color, name) {
   });
 }
 
-function createMarker(lat, lng, typeConfig, name) {
+function createMarker(lat, lng, typeConfig, name, directions) {
   const marker = L.marker([lat, lng], { icon: makeMarkerIcon(typeConfig.color, name) }).addTo(map);
   marker.bindPopup(
     `<div class="pi">
       <div class="pi-name">${name}</div>
       <div class="pi-type" style="color:${typeConfig.color}">${typeConfig.label}</div>
+      ${directions ? `<div class="pi-directions">${directions}</div>` : ''}
       <div class="pi-coords">${lat.toFixed(6)}, ${lng.toFixed(6)}</div>
     </div>`
   );
@@ -133,6 +134,7 @@ function openModal(lat, lng) {
   pending = { lat, lng };
   coordsDisplay.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
   nameInput.value = '';
+  directionsInput.value = '';
   pinTypeSelect.value = 'rooms';
   document.getElementById('backdrop').classList.add('open');
   if (ghostMarker) map.removeLayer(ghostMarker);
@@ -157,10 +159,11 @@ function closeModal() {
 function submitPin() {
   if (!isLoggedIn) { toast('Please log in to add pins'); return; }
   const name = nameInput.value.trim() || `Pin ${pins.length + 1}`;
+  const directions = directionsInput.value.trim();
   const { lat, lng } = pending;
   const typeConfig = getTypeConfig(pinTypeSelect.value);
-  const marker = createMarker(lat, lng, typeConfig, name);
-  pins.push({ name, lat, lng, type: typeConfig.value, marker });
+  const marker = createMarker(lat, lng, typeConfig, name, directions);
+  pins.push({ name, lat, lng, type: typeConfig.value, directions, marker });
   closeModal();
   updatePinPills();
   updateExportBtn();
@@ -232,9 +235,10 @@ function handleImport(file) {
       features.forEach(f => {
         const [lng, lat] = f.geometry.coordinates;
         const name = f.properties?.name || `Pin ${pins.length + 1}`;
+        const directions = f.properties?.directions || '';
         const typeConfig = getTypeConfig(f.properties?.type);
-        const marker = createMarker(lat, lng, typeConfig, name);
-        pins.push({ name, lat, lng, type: typeConfig.value, marker });
+        const marker = createMarker(lat, lng, typeConfig, name, directions);
+        pins.push({ name, lat, lng, type: typeConfig.value, directions, marker });
       });
       updatePinPills();
       updateExportBtn();
@@ -255,7 +259,7 @@ function doExport() {
     type: 'FeatureCollection',
     features: pins.map(p => ({
       type: 'Feature',
-      properties: { name: p.name, type: p.type },
+      properties: { name: p.name, type: p.type, directions: p.directions || '' },
       geometry: { type: 'Point', coordinates: [p.lng, p.lat] }
     }))
   };
@@ -329,7 +333,7 @@ function toggleSidebar() {
 // ── Persistence ──
 function savePins() {
   localStorage.setItem('hotelMapPins', JSON.stringify(
-    pins.map(({ name, lat, lng, type }) => ({ name, lat, lng, type }))
+    pins.map(({ name, lat, lng, type, directions }) => ({ name, lat, lng, type, directions }))
   ));
 }
 
@@ -338,7 +342,8 @@ function loadPins() {
     const saved = JSON.parse(localStorage.getItem('hotelMapPins') || '[]');
     pins = saved.map(s => {
       const typeConfig = getTypeConfig(s.type);
-      return { name: s.name, lat: s.lat, lng: s.lng, type: s.type, marker: createMarker(s.lat, s.lng, typeConfig, s.name) };
+      return { name: s.name, lat: s.lat, lng: s.lng, type: s.type, directions: s.directions || '',
+               marker: createMarker(s.lat, s.lng, typeConfig, s.name, s.directions) };
     });
   } catch (e) {
     console.error('loadPins:', e);
@@ -348,9 +353,10 @@ function loadPins() {
 
 // ── Init ──
 function initElements() {
-  pinTypeSelect  = document.getElementById('pinTypeSelect');
-  nameInput      = document.getElementById('nameInput');
-  coordsDisplay  = document.getElementById('coords');
+  pinTypeSelect    = document.getElementById('pinTypeSelect');
+  nameInput        = document.getElementById('nameInput');
+  directionsInput  = document.getElementById('directionsInput');
+  coordsDisplay    = document.getElementById('coords');
   searchInput    = document.getElementById('searchInput');
   exportBtn      = document.getElementById('exportBtn');
   importBtn      = document.getElementById('importBtn');
@@ -381,6 +387,10 @@ function initElements() {
   submitBtn.addEventListener('click', submitPin);
   cancelBtn.addEventListener('click', closeModal);
   nameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') directionsInput.focus();
+    if (e.key === 'Escape') closeModal();
+  });
+  directionsInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') submitPin();
     if (e.key === 'Escape') closeModal();
   });

@@ -175,6 +175,7 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 .modal-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(1,105,111,0.15); }
 .modal-input::placeholder { color: var(--faint); font-weight: 400; }
 .modal-name { flex: 1; min-width: 0; }
+.modal-directions { width: 100%; }
 
 .btn-ok, .btn-no {
   flex-shrink: 0;
@@ -238,5 +239,6 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 .pi { padding: 0.65rem 0.9rem; }
 .pi-name { font-weight: 700; font-size: 0.9rem; }
 .pi-type { font-size: 0.75rem; font-weight: 600; margin-top: 0.1rem; }
+.pi-directions { font-size: 0.78rem; color: var(--text); margin-top: 0.25rem; line-height: 1.4; }
 .pi-coords { color: var(--muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; margin-top: 0.2rem; }
 

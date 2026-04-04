@@ -305,10 +305,19 @@ function startLocationTracking() {
 
 // Button re-centres map on current position
 function locateMe() {
+  if (!navigator.geolocation) { toast('Geolocation not supported'); return; }
   if (currentPosition) {
     map.flyTo(currentPosition, 19, { duration: 1 });
   } else {
-    toast('Waiting for GPS fix…');
+    locateBtn.classList.add('locating');
+    navigator.geolocation.getCurrentPosition(
+      p => {
+        locateBtn.classList.remove('locating');
+        map.flyTo([p.coords.latitude, p.coords.longitude], 19, { duration: 1 });
+      },
+      () => { locateBtn.classList.remove('locating'); toast('Could not get location'); },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
   }
 }
 

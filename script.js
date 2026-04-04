@@ -29,6 +29,7 @@ let pinTypeSelect, nameInput, coordsDisplay, searchInput,
     submitBtn, cancelBtn;
 
 let locationMarker = null;
+let locationWatchId = null;
 
 // ── Pin type config ──
 const pinTypes = [
@@ -286,20 +287,39 @@ function handleSearch() {
 // ── Locate me ──
 function locateMe() {
   if (!navigator.geolocation) { toast('Geolocation not supported'); return; }
+
+  // Second tap — stop tracking
+  if (locationWatchId !== null) {
+    navigator.geolocation.clearWatch(locationWatchId);
+    locationWatchId = null;
+    locateBtn.classList.remove('active');
+    if (locationMarker) { map.removeLayer(locationMarker); locationMarker = null; }
+    return;
+  }
+
+  // First tap — start tracking
   locateBtn.classList.add('locating');
-  navigator.geolocation.getCurrentPosition(
+  locationWatchId = navigator.geolocation.watchPosition(
     p => {
-      locateBtn.classList.remove('locating');
       const { latitude: lat, longitude: lng } = p.coords;
-      map.flyTo([lat, lng], 19, { duration: 1 });
-      if (locationMarker) map.removeLayer(locationMarker);
-      locationMarker = L.circleMarker([lat, lng], {
-        radius: 8, color: '#fff', weight: 2.5,
-        fillColor: '#4285f4', fillOpacity: 1
-      }).addTo(map);
+      locateBtn.classList.remove('locating');
+      locateBtn.classList.add('active');
+      if (locationMarker) {
+        locationMarker.setLatLng([lat, lng]);
+      } else {
+        locationMarker = L.circleMarker([lat, lng], {
+          radius: 8, color: '#fff', weight: 2.5,
+          fillColor: '#4285f4', fillOpacity: 1
+        }).addTo(map);
+        map.flyTo([lat, lng], 19, { duration: 1 }); // centre only on first fix
+      }
     },
-    () => { locateBtn.classList.remove('locating'); toast('Could not get location'); },
-    { enableHighAccuracy: true, timeout: 8000 }
+    () => {
+      locateBtn.classList.remove('locating');
+      locationWatchId = null;
+      toast('Could not get location');
+    },
+    { enableHighAccuracy: true }
   );
 }
 

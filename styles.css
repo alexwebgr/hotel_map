@@ -203,6 +203,8 @@ html, body { height: 100%; font-family: var(--font); overflow: hidden; }
 .locate-btn:hover { color: var(--primary); background: var(--bg); }
 .locate-btn:active { transform: scale(0.9); }
 .locate-btn.locating { color: #4285f4; animation: pulse 1s infinite; }
+.locate-btn.active { background: #4285f4; color: #fff; }
+.locate-btn.active:hover { background: #2a75f3; }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
 
 /* ── Toast ── */

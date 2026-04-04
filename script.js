@@ -29,7 +29,7 @@ let pinTypeSelect, nameInput, coordsDisplay, searchInput,
     submitBtn, cancelBtn;
 
 let locationMarker = null;
-let locationWatchId = null;
+let currentPosition = null;
 
 // ── Pin type config ──
 const pinTypes = [
@@ -84,11 +84,6 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
 }
 
-// ── Geolocation ──
-navigator.geolocation && navigator.geolocation.getCurrentPosition(
-  p => map.setView([p.coords.latitude, p.coords.longitude], 19),
-  () => {}, { enableHighAccuracy: true, timeout: 8000 }
-);
 
 // ── Layer control ──
 const LAYER_ORDER = ['hybrid', 'satellite', 'street'];
@@ -284,26 +279,15 @@ function handleSearch() {
   searchInput.value = '';
 }
 
-// ── Locate me ──
-function locateMe() {
-  if (!navigator.geolocation) { toast('Geolocation not supported'); return; }
-
-  // Second tap — stop tracking
-  if (locationWatchId !== null) {
-    navigator.geolocation.clearWatch(locationWatchId);
-    locationWatchId = null;
-    locateBtn.classList.remove('active');
-    if (locationMarker) { map.removeLayer(locationMarker); locationMarker = null; }
-    return;
-  }
-
-  // First tap — start tracking
+// ── Location tracking (auto-start, always on) ──
+function startLocationTracking() {
+  if (!navigator.geolocation) return;
   locateBtn.classList.add('locating');
-  locationWatchId = navigator.geolocation.watchPosition(
+  navigator.geolocation.watchPosition(
     p => {
       const { latitude: lat, longitude: lng } = p.coords;
+      currentPosition = [lat, lng];
       locateBtn.classList.remove('locating');
-      locateBtn.classList.add('active');
       if (locationMarker) {
         locationMarker.setLatLng([lat, lng]);
       } else {
@@ -314,13 +298,18 @@ function locateMe() {
         map.flyTo([lat, lng], 19, { duration: 1 }); // centre only on first fix
       }
     },
-    () => {
-      locateBtn.classList.remove('locating');
-      locationWatchId = null;
-      toast('Could not get location');
-    },
+    () => locateBtn.classList.remove('locating'),
     { enableHighAccuracy: true }
   );
+}
+
+// Button re-centres map on current position
+function locateMe() {
+  if (currentPosition) {
+    map.flyTo(currentPosition, 19, { duration: 1 });
+  } else {
+    toast('Waiting for GPS fix…');
+  }
 }
 
 // ── Sidebar ──
@@ -402,4 +391,5 @@ document.addEventListener('DOMContentLoaded', () => {
   loadPins();
   updatePinPills();
   updateAuthUI();
+  startLocationTracking();
 });

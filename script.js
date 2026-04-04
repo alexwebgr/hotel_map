@@ -25,8 +25,10 @@ let currentLayer = 'hybrid';
 // ── DOM refs (populated in initElements) ──
 let pinTypeSelect, nameInput, coordsDisplay, searchInput,
     exportBtn, importBtn, importInput, authToggle, showPinsBtn, addPinBtn, layerBtn,
-    sidebar, sidebarContent, sidebarToggle,
+    locateBtn, sidebar, sidebarContent, sidebarToggle,
     submitBtn, cancelBtn;
+
+let locationMarker = null;
 
 // ── Pin type config ──
 const pinTypes = [
@@ -281,6 +283,26 @@ function handleSearch() {
   searchInput.value = '';
 }
 
+// ── Locate me ──
+function locateMe() {
+  if (!navigator.geolocation) { toast('Geolocation not supported'); return; }
+  locateBtn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(
+    p => {
+      locateBtn.classList.remove('locating');
+      const { latitude: lat, longitude: lng } = p.coords;
+      map.flyTo([lat, lng], 19, { duration: 1 });
+      if (locationMarker) map.removeLayer(locationMarker);
+      locationMarker = L.circleMarker([lat, lng], {
+        radius: 8, color: '#fff', weight: 2.5,
+        fillColor: '#4285f4', fillOpacity: 1
+      }).addTo(map);
+    },
+    () => { locateBtn.classList.remove('locating'); toast('Could not get location'); },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
 // ── Sidebar ──
 function toggleSidebar() {
   sidebar.classList.toggle('open');
@@ -319,6 +341,7 @@ function initElements() {
   showPinsBtn    = document.getElementById('show-pins-btn');
   addPinBtn      = document.getElementById('addPinBtn');
   layerBtn       = document.getElementById('layerBtn');
+  locateBtn      = document.getElementById('locateBtn');
   sidebar        = document.getElementById('sidebar');
   sidebarContent = document.getElementById('sidebarContent');
   sidebarToggle  = document.getElementById('sidebarToggle');
@@ -327,6 +350,7 @@ function initElements() {
 
   // Top controls
   layerBtn.addEventListener('click', cycleLayer);
+  locateBtn.addEventListener('click', locateMe);
   addPinBtn.addEventListener('click', toggleAddPin);
   authToggle.addEventListener('click', toggleAuth);
   showPinsBtn.addEventListener('click', toggleSidebar);
